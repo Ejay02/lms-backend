@@ -1,5 +1,6 @@
 const Course = require("../models/Course");
 const Progress = require("../models/Progress");
+const paginateResults = require("../utils/pagination");
 
 exports.createCourse = async (req, res) => {
   try {
@@ -21,12 +22,21 @@ exports.createCourse = async (req, res) => {
 
 exports.getCourses = async (req, res) => {
   try {
-    const courses = await Course.find()
-      .populate("instructor", "name email")
-      .select("-content.data");
-    res.json(courses);
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const query = search ? { title: { $regex: search, $options: "i" } } : {};
+
+    const results = await paginateResults(
+      Course,
+      query,
+      parseInt(page),
+      parseInt(limit),
+      "instructor"
+    );
+
+    res.json(results);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    next(error);
   }
 };
 

@@ -1,4 +1,4 @@
-const { validationResult, body, param } = require("express-validator");
+const { validationResult, body, param, header } = require("express-validator");
 
 // Validation middleware
 const validate = (req, res, next) => {
@@ -21,6 +21,29 @@ const authValidation = {
   login: [
     body("email").isEmail().normalizeEmail(),
     body("password").notEmpty(),
+  ],
+  getUser: [
+    // Since this endpoint doesn't accept any body parameters,
+    // we can add header validation to ensure the token is present
+    header("Authorization")
+      .notEmpty()
+      .withMessage("Authorization header is required"),
+  ],
+
+  resetPassword: [
+    body("email").isEmail().normalizeEmail().withMessage("Invalid email"),
+    body("newPassword")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
+  ],
+  updateProfile: [
+    body("name").optional().trim().notEmpty().withMessage("Name is required"), // Optional, if provided, must not be empty
+    body("email")
+      .optional()
+      .isEmail()
+      .normalizeEmail()
+      .withMessage("Invalid email"), // Optional, if provided, must be a valid email
+    body("profileImage").optional().isURL().withMessage("Invalid image URL"), // Optional, if provided, must be a valid URL
   ],
 };
 

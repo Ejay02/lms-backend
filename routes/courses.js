@@ -4,6 +4,7 @@ const courseController = require("../controllers/courseController");
 const auth = require("../middleware/auth");
 const roleAuth = require("../middleware/roleAuth");
 const { courseValidation, validate } = require("../middleware/validator");
+const { cache } = require("../middleware/cache");
 
 router.post(
   "/",

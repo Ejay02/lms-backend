@@ -51,6 +51,30 @@ exports.getCourses = async (req, res) => {
   }
 };
 
+exports.getMyCourses = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    // Create the query based on the search term
+    const query = search
+      ? { title: { $regex: search, $options: "i" }, students: req.user.id }
+      : { students: req.user.id };
+
+    // Paginate the results
+    const results = await paginateResults(
+      Course,
+      query,
+      parseInt(page),
+      parseInt(limit),
+      "instructor"
+    );
+
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ message: "Error getting your courses" });
+  }
+};
+
 exports.getCourseById = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id).populate(
@@ -145,30 +169,6 @@ exports.deleteCourse = async (req, res) => {
   }
 };
 
-exports.getMyCourses = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, search = "" } = req.query;
-
-    // Create the query based on the search term
-    const query = search
-      ? { title: { $regex: search, $options: "i" }, students: req.user.id }
-      : { students: req.user.id };
-
-    // Paginate the results
-    const results = await paginateResults(
-      Course,
-      query,
-      parseInt(page),
-      parseInt(limit),
-      "instructor"
-    );
-
-    res.json(results);
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 exports.addCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -186,6 +186,7 @@ exports.addCourse = async (req, res) => {
 
     // Enroll the student
     course.students.push(req.user.id);
+    course.isEnrolled = true; // Update isEnrolled flag
     await course.save();
 
     // create a progress entry for the student
@@ -195,8 +196,46 @@ exports.addCourse = async (req, res) => {
     });
     await progress.save();
 
-    res.json({ message: "Course enrolled successfully" });
+    res.json({
+      message: "Course enrolled successfully",
+      isEnrolled: true,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.unenroll = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Check if the student is enrolled
+    if (!course.students.includes(req.user.id)) {
+      return res.status(400).json({ message: "Not enrolled in this course" });
+    }
+
+    // Remove student from course
+    course.students = course.students.filter(
+      (studentId) => studentId.toString() !== req.user.id
+    );
+    course.isEnrolled = false;
+    await course.save();
+
+    // Remove progress entry
+    await Progress.findOneAndDelete({ user: req.user.id, course: course._id });
+
+    // Invalidate cache for courses
+    await invalidateCache("cache:/api/courses*");
+
+    res.json({
+      message: "Successfully unenrolled from the course",
+      isEnrolled: false,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Unenrolled error" });
   }
 };

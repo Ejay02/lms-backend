@@ -26,5 +26,6 @@ router.delete(
 );
 
 router.post("/:id/enroll", [auth], courseController.addCourse);
+router.post("/:id/unenroll", [auth], courseController.unenroll);
 
 module.exports = router;

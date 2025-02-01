@@ -5,6 +5,8 @@ const authController = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
 router.post("/signup", authValidation.signup, validate, authController.signup);
+router.post("/admin-signup", authValidation.signup, validate, authController.adminSignup);
+router.post("/instructor-signup", authValidation.signup, validate, authController.instructorSignup);
 router.post("/login", authValidation.login, validate, authController.login);
 router.post(
   "/reset-password",

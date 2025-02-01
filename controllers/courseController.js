@@ -5,11 +5,22 @@ const { cache, invalidateCache } = require("../middleware/cache");
 
 exports.createCourse = async (req, res) => {
   try {
+    const { title, description, content, coverImage } = req.body;
+
+    const updatedContent = content.map((item) => {
+      if (item.type === "image" && item.data) {
+        // Ensure the image URL is saved directly as a string
+        item.data = item.data;
+      }
+      return item;
+    });
+
     const course = new Course({
-      title: req.body.title,
-      description: req.body.description,
+      title,
+      description,
+      coverImage,
       instructor: req.user.id,
-      content: req.body.content,
+      content: updatedContent,
     });
 
     await course.save();
@@ -80,10 +91,21 @@ exports.updateCourse = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const { title, description, content } = req.body;
+    const { title, description, content, coverImage } = req.body;
+
+    const updatedContent = content.map((item) => {
+      if (item.type === "image" && item.data) {
+        item.data = item.data;
+      }
+      return item;
+    });
+
     course.title = title || course.title;
     course.description = description || course.description;
-    course.content = content || course.content;
+    course.content = updatedContent || course.content;
+    if (coverImage) {
+      course.coverImage = coverImage;
+    }
 
     Object.assign(course, req.body);
     await course.save();
@@ -118,6 +140,62 @@ exports.deleteCourse = async (req, res) => {
     await invalidateCache("cache:/api/courses*");
 
     res.json({ message: "Course deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getMyCourses = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    // Create the query based on the search term
+    const query = search
+      ? { title: { $regex: search, $options: "i" }, students: req.user.id }
+      : { students: req.user.id };
+
+    // Paginate the results
+    const results = await paginateResults(
+      Course,
+      query,
+      parseInt(page),
+      parseInt(limit),
+      "instructor"
+    );
+
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.addCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Check if the student is already enrolled
+    if (course.students.includes(req.user.id)) {
+      return res
+        .status(400)
+        .json({ message: "Already enrolled in this course" });
+    }
+
+    // Enroll the student
+    course.students.push(req.user.id);
+    await course.save();
+
+    // create a progress entry for the student
+    const progress = new Progress({
+      user: req.user.id,
+      course: course._id,
+    });
+    await progress.save();
+
+    res.json({ message: "Course enrolled successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }

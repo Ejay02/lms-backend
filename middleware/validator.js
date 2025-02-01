@@ -17,6 +17,10 @@ const authValidation = {
     body("password")
       .isLength({ min: 6 })
       .withMessage("Password must be at least 6 characters"),
+    body("role")
+      .optional() // optional because not always provided (default role is student)
+      .isIn(["student", "instructor", "admin"])
+      .withMessage("Role must be one of 'student', 'instructor', or 'admin'"),
   ],
   login: [
     body("email").isEmail().normalizeEmail(),
@@ -55,18 +59,23 @@ const courseValidation = {
       .trim()
       .notEmpty()
       .withMessage("Description is required"),
+    body("coverImage").isURL().withMessage("Cover image must be a valid URL"),
     body("content").isArray().withMessage("Content must be an array"),
     body("content.*.title")
       .trim()
       .notEmpty()
       .withMessage("Content title is required"),
     body("content.*.type")
-      .isIn(["video", "document", "quiz"])
+      .isIn(["video", "document", "quiz", "image"])
       .withMessage("Invalid content type"),
   ],
   update: [
     param("id").isMongoId().withMessage("Invalid course ID"),
     body("title").optional().trim().notEmpty(),
+    body("coverImage")
+      .optional()
+      .isURL()
+      .withMessage("Cover image must be a valid URL"),
     body("description").optional().trim().notEmpty(),
   ],
 };

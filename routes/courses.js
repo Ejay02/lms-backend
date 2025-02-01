@@ -12,6 +12,7 @@ router.post(
   courseController.createCourse
 );
 router.get("/", [auth, cache(86400)], courseController.getCourses); // Cache for 24h
+router.get("/my-courses", [auth], courseController.getMyCourses);
 router.get("/:id", [auth, cache(86400)], courseController.getCourseById);
 router.put(
   "/:id",
@@ -23,5 +24,7 @@ router.delete(
   [auth, roleAuth(["instructor", "admin"])],
   courseController.deleteCourse
 );
+
+router.post("/:id/enroll", [auth], courseController.addCourse);
 
 module.exports = router;

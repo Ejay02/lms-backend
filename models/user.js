@@ -11,6 +11,16 @@ const userSchema = new mongoose.Schema({
     enum: ["student", "instructor", "admin"],
     default: "student",
   },
+  studentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student",
+    required: false,
+  },
+  instructorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Instructor",
+    required: false,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

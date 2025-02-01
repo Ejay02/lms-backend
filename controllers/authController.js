@@ -1,4 +1,4 @@
-const User = require("../models/user");
+const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
@@ -25,12 +25,80 @@ exports.signup = async (req, res) => {
 
     const payload = { id: user.id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "48h",
     });
 
     res.json({ token });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Signup error" });
+  }
+};
+
+exports.adminSignup = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if the user already exists
+    let user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: "User already exists" });
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create a new user with role 'admin'
+    user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: "admin", // Set role to 'admin'
+    });
+
+    await user.save();
+
+    // Create a JWT token
+    const payload = { id: user.id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "48h",
+    });
+
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: "Signup error" });
+  }
+};
+
+exports.instructorSignup = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if the user already exists
+    let user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: "User already exists" });
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create a new user with role 'instructor'
+    user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: "instructor", // Set role to 'instructor'
+    });
+
+    await user.save();
+
+    // Create a JWT token
+    const payload = { id: user.id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "48h",
+    });
+
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: "Signup error" });
   }
 };
 
@@ -47,12 +115,12 @@ exports.login = async (req, res) => {
 
     const payload = { id: user.id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "48h",
     });
 
     res.json({ token });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Login error" });
   }
 };
 
@@ -91,13 +159,12 @@ exports.googleAuth = async (req, res) => {
 
     // Generate JWT
     const jwtToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "48h",
     });
 
     res.json({ token: jwtToken, scopes: data.scope, profileImage: picture });
   } catch (error) {
-    console.error("Google Auth Error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Google error" });
   }
 };
 
@@ -120,8 +187,7 @@ exports.resetPassword = async (req, res) => {
 
     res.status(200).json({ message: "Password has been reset successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Password reset error" });
   }
 };
 
@@ -144,8 +210,7 @@ exports.updateProfile = async (req, res) => {
 
     res.json({ message: "Profile updated successfully", user });
   } catch (error) {
-    console.error("Error updating profile:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Error updating profile" });
   }
 };
 
@@ -168,6 +233,6 @@ exports.getUser = async (req, res) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Error getting user" });
   }
 };

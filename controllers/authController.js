@@ -3,7 +3,11 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
 
 exports.signup = async (req, res) => {
   try {
@@ -74,7 +78,8 @@ exports.instructorSignup = async (req, res) => {
 
     // Check if the user already exists
     let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: "User already exists" });
+    if (user && user.role === "instructor")
+      return res.status(400).json({ message: "User already exists" });
 
     // Hash the password
     const salt = await bcrypt.genSalt(10);
@@ -85,12 +90,11 @@ exports.instructorSignup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "instructor", // Set role to 'instructor'
+      role: "instructor",
     });
 
     await user.save();
 
-    // Create a JWT token
     const payload = { id: user.id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "48h",
@@ -126,34 +130,43 @@ exports.login = async (req, res) => {
 
 exports.googleAuth = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { code } = req.body?.code || req.body;
 
-    // Verify ID token
+    // Exchange authorization code for tokens
+
+    const { tokens } = await googleClient.getToken(code);
+
+    const idToken = tokens.id_token;
+
+    // Verify ID token (using the access token)
     const ticket = await googleClient.verifyIdToken({
-      idToken: token,
+      idToken: idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
     const { name, email, sub: googleId, picture } = payload;
 
-    // Get access token to fetch scopes
-    const oauth2 = google.oauth2({
-      auth: googleClient,
-      version: "v2",
-    });
-
-    const { data } = await oauth2.tokeninfo({ id_token: token });
-
-    // Check if user exists, else create new user
+    // Check if user exists, else create new user (same as before)
     let user = await User.findOne({ email });
+    // if (!user) {
+    //   user = new User({ name, email, googleId, profileImage: picture });
+    //   await user.save();
+    // }
     if (!user) {
-      user = new User({
+      // If role is instructor, set it explicitly, otherwise let schema use default
+      const userData = {
         name,
         email,
         googleId,
         profileImage: picture,
-      });
+      };
+
+      // Only add role if instructor is specified
+      if (role === "instructor") {
+        userData.role = "instructor";
+      }
+      user = new User(userData);
       await user.save();
     }
 
@@ -162,9 +175,18 @@ exports.googleAuth = async (req, res) => {
       expiresIn: "48h",
     });
 
-    res.json({ token: jwtToken, scopes: data.scope, profileImage: picture });
+    res.json({
+      name,
+      email,
+      token: jwtToken,
+      profileImage: picture,
+      access_token: tokens.access_token,
+      role: user.role,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Google error" });
+    res
+      .status(401)
+      .json({ message: "Google Authentication failed", error: error.message }); 
   }
 };
 
@@ -236,3 +258,47 @@ exports.getUser = async (req, res) => {
     res.status(500).json({ message: "Error getting user" });
   }
 };
+
+// exports.googleAuth1 = async (req, res) => {
+//   try {
+//     const { token } = req.body;
+
+//     // Verify ID token
+//     const ticket = await googleClient.verifyIdToken({
+//       idToken: token,
+//       audience: process.env.GOOGLE_CLIENT_ID,
+//     });
+
+//     const payload = ticket.getPayload();
+//     const { name, email, sub: googleId, picture } = payload;
+
+//     // Get access token to fetch scopes
+//     const oauth2 = google.oauth2({
+//       auth: googleClient,
+//       version: "v2",
+//     });
+
+//     const { data } = await oauth2.tokeninfo({ id_token: token });
+
+//     // Check if user exists, else create new user
+//     let user = await User.findOne({ email });
+//     if (!user) {
+//       user = new User({
+//         name,
+//         email,
+//         googleId,
+//         profileImage: picture,
+//       });
+//       await user.save();
+//     }
+
+//     // Generate JWT
+//     const jwtToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+//       expiresIn: "48h",
+//     });
+
+//     res.json({ token: jwtToken, scopes: data.scope, profileImage: picture });
+//   } catch (error) {
+//     res.status(500).json({ message: "Google error" });
+//   }
+// };

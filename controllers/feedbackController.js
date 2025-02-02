@@ -15,7 +15,7 @@ exports.submitFeedback = async (req, res) => {
     await feedback.save();
     res.status(201).json(feedback);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Erro submitting feedbackr" });
   }
 };
 
@@ -27,6 +27,6 @@ exports.getFeedback = async (req, res) => {
 
     res.json(feedback);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Error getting feedback" });
   }
 };

@@ -26,6 +26,9 @@ const authValidation = {
     body("email").isEmail().normalizeEmail(),
     body("password").notEmpty(),
   ],
+  googleLogin: [
+    body("code").notEmpty().withMessage("Authorization code is required"),
+  ],
   getUser: [
     // Since this endpoint doesn't accept any body parameters,
     // we can add header validation to ensure the token is present
@@ -47,7 +50,12 @@ const authValidation = {
       .isEmail()
       .normalizeEmail()
       .withMessage("Invalid email"), // Optional, if provided, must be a valid email
-    body("profileImage").optional().isURL().withMessage("Invalid image URL"), // Optional, if provided, must be a valid URL
+    body("profileImage")
+      .optional()
+      .matches(/\.(jpg|jpeg|png)$/i)
+      .withMessage(
+        "Profile image must be a URL ending in .jpg, .jpeg, or .png, or a valid image URL"
+      ),
   ],
 };
 
@@ -66,7 +74,7 @@ const courseValidation = {
       .notEmpty()
       .withMessage("Content title is required"),
     body("content.*.type")
-      .isIn(["video", "document", "quiz", "image"])
+      .isIn(["video", "document", "quiz", "image", "text"])
       .withMessage("Invalid content type"),
   ],
   update: [

@@ -12,6 +12,7 @@ const paginateResults = async (
     .populate(populate)
     .skip(skip)
     .limit(limit)
+    .sort({ createdAt: -1 })
     .exec();
 
   const total = await model.countDocuments(query);

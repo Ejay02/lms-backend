@@ -13,7 +13,7 @@ const courseSchema = new mongoose.Schema({
     {
       title: String,
       description: String,
-      type: { type: String, enum: ["video", "document", "quiz", "image"] },
+      type: { type: String, enum: ["video", "document", "quiz", "image", "text"] },
       data: mongoose.Schema.Types.Mixed,
     },
   ],

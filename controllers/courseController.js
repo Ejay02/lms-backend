@@ -7,6 +7,18 @@ exports.createCourse = async (req, res) => {
   try {
     const { title, description, content, coverImage } = req.body;
 
+    // Check for duplicate course
+    const existingCourse = await Course.findOne({
+      title,
+      instructor: req.user.id,
+    });
+
+    if (existingCourse) {
+      return res.status(400).json({
+        message: "Course with this title already exists for this instructor",
+      });
+    }
+
     const updatedContent = content.map((item) => {
       if (item.type === "image" && item.data) {
         // Ensure the image URL is saved directly as a string
@@ -237,5 +249,33 @@ exports.unenroll = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Unenrolled error" });
+  }
+};
+
+exports.getInstructorCourses = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const query = search
+      ? {
+          title: { $regex: search, $options: "i" },
+          instructor: req.user.id,
+        }
+      : { instructor: req.user.id };
+
+    const results = await paginateResults(
+      Course,
+      query,
+      parseInt(page),
+      parseInt(limit),
+      { path: "instructor", select: "name email" }
+    );
+
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error retrieving instructor courses",
+      error: error.message,
+    });
   }
 };

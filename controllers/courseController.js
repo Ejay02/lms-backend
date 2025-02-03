@@ -171,13 +171,13 @@ exports.deleteCourse = async (req, res) => {
     }
 
     await Progress.deleteMany({ course: course._id });
-    await course.remove();
+    await course.deleteOne();
 
     await invalidateCache("cache:/api/courses*");
 
     res.json({ message: "Course deleted" });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Error deleting course" });
   }
 };
 

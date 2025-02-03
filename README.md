@@ -198,7 +198,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## 👥 Authors
 
-- Your Name - Initial work - [Ej](https://github.com/Ejay02/lms-backend.git)
+- Ej - Initial work - [Ej](https://github.com/Ejay02/lms-backend.git)
 
 ## 🙏 Acknowledgments
 

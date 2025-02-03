@@ -1,6 +1,7 @@
 const Progress = require('../models/Progress');
 const Course = require('../models/Course');
 
+// mark complete || update progress
 exports.updateProgress = async (req, res) => {
   try {
     const { courseId } = req.params;

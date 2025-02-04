@@ -8,13 +8,14 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
+const allowedOrigins = ["https://ej-lms.netlify.app", "http://localhost:5173"];
+
 const corsOptions = {
-  origin: "https://ej-lms.netlify.app", 
-  credentials: true, 
+  origin: allowedOrigins,
+  credentials: true,
   optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
-// Apply CORS middleware with the defined options
 app.use(cors(corsOptions));
 
 // Middleware

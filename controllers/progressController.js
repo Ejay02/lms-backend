@@ -1,4 +1,4 @@
-const Progress = require("../models/Progress");
+const Progress = require("../models/progress");
 const Course = require("../models/Course");
 
 exports.updateProgress = async (req, res) => {

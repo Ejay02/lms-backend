@@ -8,8 +8,17 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
+const corsOptions = {
+  origin: "https://ej-lms.netlify.app", 
+  credentials: true, 
+  optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+// Apply CORS middleware with the defined options
+app.use(cors(corsOptions));
+
 // Middleware
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 
 // Routes

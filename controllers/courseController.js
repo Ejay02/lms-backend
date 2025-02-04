@@ -1,4 +1,4 @@
-const Course = require("../models/Course");
+const Course = require("../models/course");
 const Progress = require("../models/progress");
 const paginateResults = require("../utils/pagination");
 // const { cache, invalidateCache } = require("../middleware/cache");

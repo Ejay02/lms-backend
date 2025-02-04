@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const User = mongoose.models.User || require("../models/User");
+const User = mongoose.models.User || require("../models/user");
 const roleAuth = (roles) => {
   return async (req, res, next) => {
     if (!req.user) return res.status(401).json({ message: "Not authorized" });

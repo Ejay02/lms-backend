@@ -1,7 +1,7 @@
 const Course = require("../models/Course");
 const Progress = require("../models/Progress");
 const paginateResults = require("../utils/pagination");
-const { cache, invalidateCache } = require("../middleware/cache");
+// const { cache, invalidateCache } = require("../middleware/cache");
 
 exports.createCourse = async (req, res) => {
   try {
@@ -36,7 +36,7 @@ exports.createCourse = async (req, res) => {
     });
 
     await course.save();
-    await invalidateCache("cache:/api/courses*");
+    // await invalidateCache("cache:/api/courses*");
     res.status(201).json(course);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -147,10 +147,10 @@ exports.updateCourse = async (req, res) => {
     await course.save();
 
     // Invalidate both course list and specific course cache
-    await invalidateCache([
-      "cache:/api/courses*",
-      `cache:/api/courses/${req.params.id}`,
-    ]);
+    // await invalidateCache([
+    //   "cache:/api/courses*",
+    //   `cache:/api/courses/${req.params.id}`,
+    // ]);
 
     res.json(course);
   } catch (error) {
@@ -173,7 +173,7 @@ exports.deleteCourse = async (req, res) => {
     await Progress.deleteMany({ course: course._id });
     await course.deleteOne();
 
-    await invalidateCache("cache:/api/courses*");
+    // await invalidateCache("cache:/api/courses*");
 
     res.json({ message: "Course deleted" });
   } catch (error) {
@@ -241,7 +241,7 @@ exports.unenroll = async (req, res) => {
     await Progress.findOneAndDelete({ user: req.user.id, course: course._id });
 
     // Invalidate cache for courses
-    await invalidateCache("cache:/api/courses*");
+    // await invalidateCache("cache:/api/courses*");
 
     res.json({
       message: "Successfully unenrolled from the course",

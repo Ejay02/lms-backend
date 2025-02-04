@@ -108,6 +108,7 @@ JWT_SECRET=your_jwt_secret
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=your_google_redirect_uri
 
 # Redis
 REDIS_HOST=localhost
@@ -128,7 +129,7 @@ npm start
 ```
 
 2. Access the API at `http://localhost:5000`
-3. View API documentation at `http://localhost:5000/api-docs`
+3. View API documentation at `https://documenter.getpostman.com/view/36020954/2sAYX5LNY1`
 
 ## 📝 API Endpoints
 
@@ -179,7 +180,6 @@ npm run test:coverage
 - Input validation using express-validator
 - JWT authentication
 - Role-based access control
-- Request rate limiting
 - Secure password hashing using bcrypt
 - XSS protection
 - CORS enabled

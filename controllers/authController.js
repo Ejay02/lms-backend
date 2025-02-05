@@ -38,6 +38,7 @@ exports.signup = async (req, res) => {
   }
 };
 
+//TODO: implement when im bored
 exports.adminSignup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -149,12 +150,9 @@ exports.googleAuth = async (req, res) => {
 
     // Check if user exists, else create new user (same as before)
     let user = await User.findOne({ email });
-    // if (!user) {
-    //   user = new User({ name, email, googleId, profileImage: picture });
-    //   await user.save();
-    // }
+
     if (!user) {
-      // If role is instructor, set it explicitly, otherwise let schema use default
+      // If role is instructor, set it explicitly, otherwise default to student
       const userData = {
         name,
         email,
@@ -186,7 +184,7 @@ exports.googleAuth = async (req, res) => {
   } catch (error) {
     res
       .status(401)
-      .json({ message: "Google Authentication failed", error: error.message }); 
+      .json({ message: "Google Authentication failed", error: error.message });
   }
 };
 
@@ -216,7 +214,7 @@ exports.resetPassword = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const { name, email, profileImage } = req.body;
-    const userId = req.user.id; // Assuming you're using a middleware to authenticate the user
+    const userId = req.user.id;
 
     // Find the user by ID
     let user = await User.findById(userId);
@@ -258,47 +256,3 @@ exports.getUser = async (req, res) => {
     res.status(500).json({ message: "Error getting user" });
   }
 };
-
-// exports.googleAuth1 = async (req, res) => {
-//   try {
-//     const { token } = req.body;
-
-//     // Verify ID token
-//     const ticket = await googleClient.verifyIdToken({
-//       idToken: token,
-//       audience: process.env.GOOGLE_CLIENT_ID,
-//     });
-
-//     const payload = ticket.getPayload();
-//     const { name, email, sub: googleId, picture } = payload;
-
-//     // Get access token to fetch scopes
-//     const oauth2 = google.oauth2({
-//       auth: googleClient,
-//       version: "v2",
-//     });
-
-//     const { data } = await oauth2.tokeninfo({ id_token: token });
-
-//     // Check if user exists, else create new user
-//     let user = await User.findOne({ email });
-//     if (!user) {
-//       user = new User({
-//         name,
-//         email,
-//         googleId,
-//         profileImage: picture,
-//       });
-//       await user.save();
-//     }
-
-//     // Generate JWT
-//     const jwtToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-//       expiresIn: "48h",
-//     });
-
-//     res.json({ token: jwtToken, scopes: data.scope, profileImage: picture });
-//   } catch (error) {
-//     res.status(500).json({ message: "Google error" });
-//   }
-// };

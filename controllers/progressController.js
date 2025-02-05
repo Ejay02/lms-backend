@@ -78,6 +78,75 @@ exports.updateProgress = async (req, res) => {
   }
 };
 
+exports.uncheckProgress = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { contentId } = req.body;
+
+    // Validate input
+    if (!courseId || !contentId) {
+      return res.status(400).json({
+        message: "Course ID and Content ID are required",
+      });
+    }
+
+    // Find the course first to ensure it exists and get content length
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found",
+      });
+    }
+
+    // Find existing progress
+    let progress = await Progress.findOne({
+      user: req.user.id,
+      course: courseId,
+    });
+
+    if (!progress) {
+      return res.status(404).json({
+        message: "Progress not found for this course",
+      });
+    }
+
+    // Remove the content from the completedContent array
+    const initialLength = progress.completedContent.length;
+    progress.completedContent = progress.completedContent.filter(
+      (item) => item.contentId.toString() !== contentId
+    );
+
+    // Only update progress if there was a change
+    if (progress.completedContent.length !== initialLength) {
+      // Recalculate progress percentage
+      progress.progress =
+        (progress.completedContent.length / course.content.length) * 100;
+    }
+
+    // Update last accessed timestamp
+    progress.lastAccessed = new Date();
+
+    // Save the updated progress
+    await progress.save();
+
+    // Populate course details before sending response
+    await progress.populate("course", "title");
+
+    res.json({
+      progress: progress.progress,
+      completedContent: progress.completedContent,
+      lastAccessed: progress.lastAccessed,
+      course: progress.course,
+    });
+  } catch (error) {
+    console.error("Progress uncheck error:", error);
+    res.status(500).json({
+      message: "Failed to update progress",
+      error: error.message,
+    });
+  }
+};
+
 exports.getProgress = async (req, res) => {
   try {
     const { courseId } = req.params;
